@@ -1,0 +1,39 @@
+# .github/workflows/aggregate.yml
+name: RSS Aggregator
+
+on:
+  schedule:
+    - cron: '*/10 * * * *'   # 10分ごと（最短は5分だがAPI制限注意）
+  workflow_dispatch:           # GitHub UIから手動実行可能
+
+permissions:
+  contents: write  # gh-pagesブランチへのpushに必要
+
+jobs:
+  aggregate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5        # 詰まったときの保険
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run aggregator
+        run: python scripts/aggregate.py
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./output
+          keep_files: false
+          # CORSヘッダー付与（Androidアプリから直接叩く場合は不要だが念のため）
+          enable_jekyll: false
