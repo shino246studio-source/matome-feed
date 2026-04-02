@@ -48,10 +48,13 @@ def extract_thumbnail(entry: dict) -> str | None:
 def fetch_feed(feed_info: dict) -> dict:
     try:
         # タイムアウト設定必須（GitHub Actionsで詰まり防止）
-        d = feedparser.parse(
+        resp = requests.get(
             feed_info["url"],
-            request_headers={"User-Agent": "Mozilla/5.0 (compatible; MatomeAggregator/1.0)"},
+            headers={"User-Agent": "Mozilla/5.0 (compatible; MatomeAggregator/1.0)"},
+            timeout=10,
         )
+        resp.raise_for_status()
+        d = feedparser.parse(resp.content)
 
         if d.bozo and not d.entries:
             raise ValueError(f"Feed parse error: {d.bozo_exception}")
