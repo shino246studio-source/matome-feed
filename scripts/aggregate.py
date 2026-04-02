@@ -103,7 +103,7 @@ def main():
         "schema_version": 1,
         "updated_at":     datetime.now(timezone.utc).isoformat(),
         "total":          len(all_articles),
-        "articles":       all_articles[:500],
+        "articles":       all_articles[:3000],
         "site_status":    site_status,
     }
 
