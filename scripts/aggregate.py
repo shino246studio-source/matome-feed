@@ -45,6 +45,33 @@ def extract_thumbnail(entry: dict) -> str | None:
     return None
 
 
+HATENA_API = "https://bookmark.hatenaapis.com/count/entries"
+
+
+def fetch_hatena_batch(urls: list[str]) -> dict[str, int]:
+    """50件以下のURLバッチに対してはてブ数を取得"""
+    try:
+        resp = requests.get(HATENA_API, params=[("url", u) for u in urls], timeout=10)
+        resp.raise_for_status()
+        return resp.json()  # {"url": count, ...}
+    except Exception as e:
+        print(f"[WARN] Hatena API error: {e}")
+        return {}
+
+
+def fetch_hatena_counts(urls: list[str]) -> dict[str, int]:
+    """全URLのはてブ数を50件ずつ並列取得"""
+    chunks = [urls[i:i + 50] for i in range(0, len(urls), 50)]
+    counts = {}
+
+    with ThreadPoolExecutor(max_workers=10) as executor:
+        futures = {executor.submit(fetch_hatena_batch, chunk): chunk for chunk in chunks}
+        for future in as_completed(futures):
+            counts.update(future.result())
+
+    return counts
+
+
 def fetch_feed(feed_info: dict) -> dict:
     try:
         # タイムアウト設定必須（GitHub Actionsで詰まり防止）
@@ -102,11 +129,20 @@ def main():
 
     all_articles.sort(key=sort_key, reverse=True)
 
+    # 上位3000件に絞ってからはてブ数を取得
+    all_articles = all_articles[:3000]
+    article_urls = [a["url"] for a in all_articles if a["url"]]
+    hatena_counts = fetch_hatena_counts(article_urls)
+    for article in all_articles:
+        article["hatena_bookmarks"] = hatena_counts.get(article["url"], 0)
+
+    print(f"📚 Hatena bookmarks fetched for {len(article_urls)} articles")
+
     output = {
         "schema_version": 1,
         "updated_at":     datetime.now(timezone.utc).isoformat(),
         "total":          len(all_articles),
-        "articles":       all_articles[:3000],
+        "articles":       all_articles,
         "site_status":    site_status,
     }
 
