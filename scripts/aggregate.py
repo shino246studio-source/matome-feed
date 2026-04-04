@@ -188,6 +188,8 @@ def fetch_feed(feed_info: dict) -> dict:
 
 # ── 人気記事 ──────────────────────────────────────────
 def should_update_popular(store: dict) -> bool:
+    if os.environ.get("FORCE_POPULAR"):
+        return True
     ts = store.get("popular_updated_at")
     if not ts:
         return True
