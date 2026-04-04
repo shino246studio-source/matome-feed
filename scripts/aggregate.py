@@ -294,8 +294,9 @@ def main():
     store_articles = store.get("articles", {})
     print(f"[STORE] Store after merge: {len(store_articles)} articles")
 
-    # 4. feed.json: storeから新しい順に3000件
+    # 4. feed.json: storeから新しい順に3000件（未来の記事を除外）
     sorted_articles = sorted(store_articles.values(), key=sort_key, reverse=True)
+    sorted_articles = [a for a in sorted_articles if sort_key(a) <= now]
     feed_articles = sorted_articles[:3000]
 
     article_urls = [a["url"] for a in feed_articles if a["url"]]
