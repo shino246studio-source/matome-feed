@@ -28,12 +28,14 @@ jobs:
 
       - name: Run aggregator
         run: python scripts/aggregate.py
+        env:
+          PAGES_BASE_URL: https://shino246studio-source.github.io/matome-feed
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./output
-          keep_files: false
+          keep_files: true
           # CORSヘッダー付与（Androidアプリから直接叩く場合は不要だが念のため）
           enable_jekyll: false
