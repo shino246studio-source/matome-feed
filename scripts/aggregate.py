@@ -205,10 +205,11 @@ def _fetch_one_popular(category: str, url: str) -> list[dict]:
         resp.raise_for_status()
         d = feedparser.parse(resp.content)
         entries = []
-        for entry in d.entries:
+        for rank, entry in enumerate(d.entries, start=1):
             entries.append({
                 "title": entry.get("title", "").strip(),
                 "category": category,
+                "rank": rank,
             })
         return entries
     except Exception as e:
@@ -258,6 +259,7 @@ def build_popular(store: dict, popular_entries: list[dict]) -> list[dict]:
         if article and article["url"] not in seen_urls:
             item = dict(article)
             item["category"] = category
+            item["rank"] = entry.get("rank", 999)
             matched.append(item)
             seen_urls.add(article["url"])
 
